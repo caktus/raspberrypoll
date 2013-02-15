@@ -11,17 +11,21 @@ class Screen(object):
 
     width = 640
     height = 480
+    background_color = pygame.color.THECOLORS['grey']
 
     def __init__(self):
         pygame.init()
+        pygame.display.set_caption("Raspberry Pi Poll Application")
         self.surface = pygame.display.set_mode((self.width, self.height))
-
+        self.background = pygame.Surface(self.surface.get_size()).convert()
+        self.background.fill(self.background_color)
         self.objects = []
 
     def add(self, obj):
         self.objects.append(obj)
 
     def draw(self):
+        self.surface.blit(self.background, (0, 0))
         for obj in self.objects:
             obj.draw(self.surface)
         pygame.display.flip()
@@ -29,15 +33,18 @@ class Screen(object):
 
 class Bar(object):
 
-    def __init__(self, label, (x, y), height):
+    default_color = pygame.color.THECOLORS['blue']
+
+    def __init__(self, label, (x, y), height, color=None):
         self.label = label
         self.x = x
         self.y = y
         self.height = height
+        self.color = color or self.default_color
 
     def draw(self, to):
         rect = pygame.Rect(self.x, self.y - self.height, 100, self.height)
-        pygame.draw.rect(to, (255, 255, 255), rect)
+        pygame.draw.rect(to, self.color, rect)
 
 
 class PollDisplay(object):
