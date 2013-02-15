@@ -111,7 +111,7 @@ class RandomPollDataSource(object):
     def __init__(self, dbpath, choices=None):
         self.dbpath = dbpath
         if choices is None:
-            choices = random.choice(range(1, 6))
+            choices = random.choice(range(2, 6))
         self.bars = [0 for i in xrange(choices)]
 
     def get_choices(self):
