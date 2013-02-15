@@ -1,16 +1,22 @@
 #!/usr/bin/env python
+from __future__ import division
 
-import os, sys
+import sys
 import random
 import time
 
 import pygame
 
 
+SCREEN_WIDTH = 640
+SCREEN_HEIGHT = 480
+MAX_BAR_HEIGHT = SCREEN_HEIGHT - 100 - 50
+
+
 class Screen(object):
 
-    width = 640
-    height = 480
+    width = SCREEN_WIDTH
+    height = SCREEN_HEIGHT
     background_color = pygame.color.THECOLORS['grey']
 
     def __init__(self):
@@ -38,12 +44,18 @@ class Bar(object):
     bar_color = pygame.color.THECOLORS['blue']
     label_color = (100, 25, 33)
 
-    def __init__(self, label, (x, y), height):
+    def __init__(self, poll_display, label, (x, y), height):
+        self.poll_display = poll_display
         self.label = label
         self.x = x
         self.y = y
         self.height = height
         self.font = pygame.font.Font(None, 24)
+
+    @property
+    def get_bar_height(self):
+        percent = self.height / (self.poll_display.highest_value or 1)
+        return percent * MAX_BAR_HEIGHT
 
     def draw_label(self, to):
         text = self.font.render(self.label, True, self.label_color)
@@ -52,13 +64,13 @@ class Bar(object):
         to.blit(text, textpos)
 
     def draw_bar(self, to):
-        rect = pygame.Rect(self.x, self.y - self.height, 100, self.height)
+        rect = pygame.Rect(self.x, self.y - self.get_bar_height, 100, self.get_bar_height)
         pygame.draw.rect(to, self.bar_color, rect)
 
     def draw_value(self, to):
         text = self.font.render(str(self.height), True, self.label_color)
         textpos = text.get_rect()
-        textpos.move_ip(self.x, self.y - self.height - 20)
+        textpos.move_ip(self.x, self.y - self.get_bar_height - 20)
         to.blit(text, textpos)
 
     def draw(self, to):
@@ -76,11 +88,11 @@ class PollDisplay(object):
         self.bars = []
         choices = datasource.get_choices()
 
-        graph_width = 640 - 50 - 50
+        graph_width = SCREEN_WIDTH - 50 - 50
         num_choices = len(choices)
         gap = (graph_width - (num_choices * 100)) / ((num_choices - 1) or 1)
         for i, label in choices:
-            bar = Bar(label, (50 + (i * (100 + gap)), 400), 0)
+            bar = Bar(self, label, (50 + (i * (100 + gap)), 400), 0)
             self.bars.append(bar)
             self.screen.add(bar)
 
@@ -89,6 +101,7 @@ class PollDisplay(object):
 
     def show_poll(self):
         data = self.datasource.get_poll_results(self.poll_id)
+        self.highest_value = max(data)
         for i, n in enumerate(data):
             self.bars[i].height = n
         self.screen.draw()
