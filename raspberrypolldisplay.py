@@ -50,7 +50,8 @@ class PollDisplay(object):
         choices = datasource.get_choices()
 
         graph_width = 640 - 50 - 50
-        gap = (graph_width - (len(choices)*100) ) / (len(choices) - 1)
+        num_choices = len(choices)
+        gap = (graph_width - (num_choices * 100)) / ((num_choices - 1) or 1)
         for i, label in choices:
             bar = Bar(label, (50 + (i * (100 + gap)), 400), 0)
             self.bars.append(bar)
@@ -93,13 +94,12 @@ def main(argv):
     datasource = PollDataSource(argv[-1])
 
     app = PollDisplay(datasource)
-
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return
         time.sleep(0.5)
         app.show_poll()
-    
+
 if __name__ == "__main__":
     main(sys.argv)
