@@ -14,12 +14,14 @@ class Screen(object):
     background_color = pygame.color.THECOLORS['grey']
 
     def __init__(self):
+        self.objects = []
+        # Initialize pygame and create the display window
         pygame.init()
         pygame.display.set_caption("Raspberry Pi Poll Application")
         self.surface = pygame.display.set_mode((self.width, self.height))
+        # Setup background
         self.background = pygame.Surface(self.surface.get_size()).convert()
         self.background.fill(self.background_color)
-        self.objects = []
 
     def add(self, obj):
         self.objects.append(obj)
@@ -33,18 +35,36 @@ class Screen(object):
 
 class Bar(object):
 
-    default_color = pygame.color.THECOLORS['blue']
+    bar_color = pygame.color.THECOLORS['blue']
+    label_color = (100, 25, 33)
 
-    def __init__(self, label, (x, y), height, color=None):
+    def __init__(self, label, (x, y), height):
         self.label = label
         self.x = x
         self.y = y
         self.height = height
-        self.color = color or self.default_color
+        self.font = pygame.font.Font(None, 24)
+
+    def draw_label(self, to):
+        text = self.font.render(self.label, True, self.label_color)
+        textpos = text.get_rect()
+        textpos.move_ip(self.x, self.y + 30)
+        to.blit(text, textpos)
+
+    def draw_bar(self, to):
+        rect = pygame.Rect(self.x, self.y - self.height, 100, self.height)
+        pygame.draw.rect(to, self.bar_color, rect)
+
+    def draw_value(self, to):
+        text = self.font.render(str(self.height), True, self.label_color)
+        textpos = text.get_rect()
+        textpos.move_ip(self.x, self.y - self.height - 20)
+        to.blit(text, textpos)
 
     def draw(self, to):
-        rect = pygame.Rect(self.x, self.y - self.height, 100, self.height)
-        pygame.draw.rect(to, self.color, rect)
+        self.draw_bar(to)
+        self.draw_label(to)
+        self.draw_value(to)
 
 
 class PollDisplay(object):
