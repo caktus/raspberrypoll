@@ -66,10 +66,12 @@ class PollDisplay(object):
         self.screen.draw()
 
 
-class PollDataSource(object):
-    def __init__(self, dbpath):
+class RandomPollDataSource(object):
+    def __init__(self, dbpath, choices=None):
         self.dbpath = dbpath
-        self.bars = [0 for i in xrange(random.choice(range(1, 6)))]
+        if choices is None:
+            choices = random.choice(range(1, 6))
+        self.bars = [0 for i in xrange(choices)]
 
     def get_choices(self):
         return [(i, str(i)) for i, bar in enumerate(self.bars)]
@@ -81,6 +83,9 @@ class PollDataSource(object):
         i = random.choice(range(len(self.bars)))
         self.bars[i] += int(random.random() * 10)
         return self.bars[:]
+
+
+PollDataSource = RandomPollDataSource
 
 
 def main(argv):
