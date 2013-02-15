@@ -29,7 +29,8 @@ class Screen(object):
 
 class Bar(object):
 
-    def __init__(self, (x, y), height):
+    def __init__(self, label, (x, y), height):
+        self.label = label
         self.x = x
         self.y = y
         self.height = height
@@ -40,29 +41,60 @@ class Bar(object):
 
 
 class PollDisplay(object):
-    def __init__(self):
+    def __init__(self, datasource):
         self.screen = Screen()
+        self.datasource = datasource
+        self.poll_id = datasource.get_next_poll()
+
         self.bars = []
-        for i in xrange(4):
-            bar = Bar((48 + (i * 148), 400), 0)
+        choices = datasource.get_choices()
+
+        graph_width = 640 - 50 - 50
+        gap = (graph_width - (len(choices)*100) ) / (len(choices) - 1)
+        for i, label in choices:
+            bar = Bar(label, (50 + (i * (100 + gap)), 400), 0)
             self.bars.append(bar)
             self.screen.add(bar)
 
-    def run(self):
-        i = random.choice(range(4))
-        bar = self.bars[i]
-        bar.height += int(random.random() * 10)
+    def next_poll(self):
+        self.poll_id = self.datasource.get_next_poll()
 
+    def show_poll(self):
+        data = self.datasource.get_poll_results(self.poll_id)
+        for i, n in enumerate(data):
+            self.bars[i].height = n
         self.screen.draw()
 
 
-def main():
+class PollDataSource(object):
+    def __init__(self, dbpath):
+        self.dbpath = dbpath
+        self.bars = [0 for i in xrange(random.choice(range(1, 6)))]
 
-    app = PollDisplay()
+    def get_choices(self):
+        return [(i, str(i)) for i, bar in enumerate(self.bars)]
+
+    def get_next_poll(self):
+        return 1
+
+    def get_poll_results(self, poll_id):
+        i = random.choice(range(len(self.bars)))
+        self.bars[i] += int(random.random() * 10)
+        return self.bars[:]
+
+
+def main(argv):
+
+    datasource = PollDataSource(argv[-1])
+
+    app = PollDisplay(datasource)
 
     while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return
         time.sleep(0.5)
-        app.run()
+        app.show_poll()
     
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
