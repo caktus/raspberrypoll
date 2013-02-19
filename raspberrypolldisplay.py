@@ -6,6 +6,7 @@ import os
 import random
 import time
 import sqlite3
+from datetime import datetime, timedelta
 
 import pygame
 
@@ -13,7 +14,7 @@ import pygame
 SCREEN_WIDTH = 640
 SCREEN_HEIGHT = 480
 MAX_BAR_HEIGHT = SCREEN_HEIGHT - 100 - 50
-FONT_FILE = os.path.join(os.path.dirname(__file__), '8bitwonder.ttf')
+FONT_FILE = os.path.join(os.path.dirname(__file__), 'PressStart2P.ttf')
 
 
 class Screen(object):
@@ -34,6 +35,9 @@ class Screen(object):
 
     def add(self, obj):
         self.objects.append(obj)
+
+    def clear(self):
+        self.objects = []
 
     def draw(self):
         self.surface.blit(self.background, (0, 0))
@@ -61,7 +65,7 @@ class Bar(object):
         return percent * MAX_BAR_HEIGHT
 
     def draw_label(self, to):
-        text = self.font.render(self.label, True, self.label_color)
+        text = self.font.render(self.label, False, self.label_color)
         textpos = text.get_rect()
         textpos.move_ip(self.x, self.y + 30)
         to.blit(text, textpos)
@@ -71,7 +75,7 @@ class Bar(object):
         pygame.draw.rect(to, self.color, rect)
 
     def draw_value(self, to):
-        text = self.font.render(str(self.height), True, self.label_color)
+        text = self.font.render(str(self.height), False, self.label_color)
         textpos = text.get_rect()
         textpos.move_ip(self.x, self.y - self.get_bar_height - 30)
         to.blit(text, textpos)
@@ -84,22 +88,25 @@ class Bar(object):
 
 class PollDisplay(object):
 
-    BAR_COLORS = (
+    BAR_COLORS = [
         pygame.color.THECOLORS['blue'],
         pygame.color.THECOLORS['red'],
         pygame.color.THECOLORS['green'],
         pygame.color.THECOLORS['yellow'],
         pygame.color.THECOLORS['purple'],
-    )
+    ]
 
     def __init__(self, datasource):
         self.screen = Screen()
-        self.font = pygame.font.Font(FONT_FILE, 24)
+        self.font = pygame.font.Font(FONT_FILE, 20)
         self.datasource = datasource
-        self.poll_id = datasource.get_next_poll()
+        self.change_at = datetime.now() + timedelta(seconds=30)
+        self.next_poll()
 
+    def setup_bars(self):
+        self.screen.clear()
         self.bars = []
-        choices = datasource.get_choices(self.poll_id)
+        choices = self.datasource.get_choices(self.poll_id)
 
         graph_width = SCREEN_WIDTH - 50 - 50
         num_choices = len(choices)
@@ -114,8 +121,13 @@ class PollDisplay(object):
     def next_poll(self):
         self.poll_id = self.datasource.get_next_poll()
         random.shuffle(self.BAR_COLORS)
+        self.setup_bars()
 
     def show_poll(self):
+        if self.change_at <= datetime.now():
+            self.change_at = datetime.now() + timedelta(seconds=30)
+            self.next_poll()
+
         data = self.datasource.get_poll_results(self.poll_id)
         self.highest_value = max(data)
         for i, n in enumerate(data):
@@ -123,9 +135,9 @@ class PollDisplay(object):
         self.screen.draw()
 
     def draw(self, to):
-        text = self.font.render(self.datasource.get_poll_name(self.poll_id), True, pygame.color.THECOLORS['white'])
+        text = self.font.render(self.datasource.get_poll_name(self.poll_id), False, pygame.color.THECOLORS['white'])
         textpos = text.get_rect()
-        textpos.move_ip((640 / 2) - (textpos.width / 2), 0)
+        textpos.move_ip((640 / 2) - (textpos.width / 2), 5)
         to.blit(text, textpos)
 
 
@@ -163,7 +175,10 @@ class SqlitePollDataSource(object):
         return [(i, r[0]) for (i, r) in enumerate(self.cur.fetchall())]
 
     def get_next_poll(self):
-        return 1
+        self.cur.execute("select id from textpoll_poll order by id")
+        ids = [r[0] for r in self.cur.fetchall()]
+        self.poll_index += 1
+        return ids[self.poll_index % len(ids)]
 
     def get_poll_results(self, poll_id):
         self.cur.execute("select id from textpoll_option where poll_id = ? order by id", (poll_id,))
@@ -176,7 +191,8 @@ class SqlitePollDataSource(object):
         return scores
 
     def get_poll_name(self, poll_id):
-        return "Poll %d" % (poll_id,)
+        self.cur.execute("select text from textpoll_poll where id = ?", (poll_id,))
+        return self.cur.fetchone()[0]
 
 
 def main(argv):
