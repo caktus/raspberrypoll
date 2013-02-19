@@ -5,6 +5,7 @@ import sys
 import os
 import random
 import time
+import sqlite3
 
 import pygame
 
@@ -98,7 +99,7 @@ class PollDisplay(object):
         self.poll_id = datasource.get_next_poll()
 
         self.bars = []
-        choices = datasource.get_choices()
+        choices = datasource.get_choices(self.poll_id)
 
         graph_width = SCREEN_WIDTH - 50 - 50
         num_choices = len(choices)
@@ -149,12 +150,43 @@ class RandomPollDataSource(object):
         return "Poll %d" % (poll_id,)
 
 
-PollDataSource = RandomPollDataSource
+class SqlitePollDataSource(object):
+    def __init__(self, dbpath, choices=None):
+        self.dbpath = dbpath
+        self.db = sqlite3.connect(dbpath)
+        self.cur = self.db.cursor()
+        self.poll_index = 0
+
+    def get_choices(self, poll_id):
+        self.cur.execute("select text from textpoll_option where poll_id = ? order by id", (poll_id,))
+        return [(i, r[0]) for (i, r) in enumerate(self.cur.fetchall())]
+
+    def get_next_poll(self):
+        return 1
+
+    def get_poll_results(self, poll_id):
+        self.cur.execute("select id from textpoll_option where poll_id = ? order by id", (poll_id,))
+        options = [r[0] for r in self.cur.fetchall()]
+        scores = [0 for _ in options]
+        for i, option_id in enumerate(options):
+            self.cur.execute("select count(id) from textpoll_vote where poll_id = ? and option_id = ?", (poll_id, option_id))
+            scores[i] = self.cur.fetchone()[0]
+
+        return scores
+
+    def get_poll_name(self, poll_id):
+        return "Poll %d" % (poll_id,)
 
 
 def main(argv):
 
-    datasource = PollDataSource(argv[-1])
+    source_path = argv[1]
+    if source_path == ":random:":
+        PollDataSource = RandomPollDataSource
+    else:
+        PollDataSource = SqlitePollDataSource
+
+    datasource = PollDataSource(source_path)
 
     app = PollDisplay(datasource)
     while True:
