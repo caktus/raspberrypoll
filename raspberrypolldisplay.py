@@ -60,9 +60,8 @@ class Bar(object):
         self.height = height
         self.font = pygame.font.Font(FONT_FILE, 16)
 
-    @property
     def get_bar_height(self):
-        percent = self.height / (self.poll_display.highest_value or 1)
+        percent = self.height / max(self.poll_display.highest_value, 20)
         return percent * MAX_BAR_HEIGHT
 
     def draw_label(self, to):
@@ -72,13 +71,13 @@ class Bar(object):
         to.blit(text, textpos)
 
     def draw_bar(self, to):
-        rect = pygame.Rect(self.x, self.y - self.get_bar_height, 100, self.get_bar_height)
+        rect = pygame.Rect(self.x, self.y - self.get_bar_height(), 100, self.get_bar_height())
         pygame.draw.rect(to, self.color, rect)
 
     def draw_value(self, to):
         text = self.font.render(str(self.height), False, self.label_color)
         textpos = text.get_rect()
-        textpos.move_ip(self.x, self.y - self.get_bar_height - 30)
+        textpos.move_ip(self.x, self.y - self.get_bar_height() - 30)
         to.blit(text, textpos)
 
     def draw(self, to):
