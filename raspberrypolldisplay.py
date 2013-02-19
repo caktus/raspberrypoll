@@ -113,6 +113,7 @@ class PollDisplay(object):
 
     def next_poll(self):
         self.poll_id = self.datasource.get_next_poll()
+        random.shuffle(self.BAR_COLORS)
 
     def show_poll(self):
         data = self.datasource.get_poll_results(self.poll_id)
