@@ -13,8 +13,9 @@ import pygame
 
 SCREEN_WIDTH = 640
 SCREEN_HEIGHT = 480
-MAX_BAR_HEIGHT = SCREEN_HEIGHT - 100 - 50
+MAX_BAR_HEIGHT = SCREEN_HEIGHT - 100 - 90
 FONT_FILE = os.path.join(os.path.dirname(__file__), 'PressStart2P.ttf')
+LOGO_FILE = os.path.join(os.path.dirname(__file__), 'caktus-logo.png')
 
 
 class Screen(object):
@@ -86,6 +87,25 @@ class Bar(object):
         self.draw_value(to)
 
 
+class Sprite(object):
+    def __init__(self, image, rescale=1):
+        self.rect = image.get_rect()
+        if rescale > 1:
+            width = self.rect.width
+            height = self.rect.height
+            image = pygame.transform.scale(image, (int(width / rescale), int(height / rescale)))
+            image = pygame.transform.scale(image, (width, height))
+        self.image = image
+        self.width = self.rect.width
+        self.height = self.rect.height
+
+    def move_to(self, x, y):
+        self.rect.move_ip(x, y)
+
+    def draw(self, to):
+        to.blit(self.image, self.rect)
+
+
 class PollDisplay(object):
 
     BAR_COLORS = [
@@ -99,6 +119,9 @@ class PollDisplay(object):
     def __init__(self, datasource):
         self.screen = Screen()
         self.font = pygame.font.Font(FONT_FILE, 20)
+        self.logo = Sprite(pygame.image.load(LOGO_FILE), rescale=2)
+        self.logo.move_to(self.screen.width/2 - self.logo.width/2, self.screen.height - self.logo.height)
+
         self.datasource = datasource
         self.change_at = datetime.now() + timedelta(seconds=30)
         self.next_poll()
@@ -112,10 +135,10 @@ class PollDisplay(object):
         num_choices = len(choices)
         gap = (graph_width - (num_choices * 100)) / ((num_choices - 1) or 1)
         for i, label in choices:
-            bar = Bar(self, label, (50 + (i * (100 + gap)), 400), 0, color=self.BAR_COLORS[i])
+            bar = Bar(self, label, (50 + (i * (100 + gap)), 360), 0, color=self.BAR_COLORS[i])
             self.bars.append(bar)
             self.screen.add(bar)
-
+        self.screen.add(self.logo)
         self.screen.add(self)
 
     def next_poll(self):
@@ -132,6 +155,8 @@ class PollDisplay(object):
         self.highest_value = max(data)
         for i, n in enumerate(data):
             self.bars[i].height = n
+
+        
         self.screen.draw()
 
     def draw(self, to):
