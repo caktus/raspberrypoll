@@ -9,6 +9,7 @@ import sqlite3
 from datetime import datetime, timedelta
 
 import pygame
+from pygame.constants import *
 
 
 SCREEN_WIDTH = 640
@@ -232,7 +233,9 @@ def main(argv):
     app = PollDisplay(datasource)
     while True:
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if event.type == KEYUP and event.key == K_ESCAPE:
+                return
+            if event.type == QUIT:
                 return
         time.sleep(0.5)
         app.show_poll()
