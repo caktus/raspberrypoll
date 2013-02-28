@@ -17,6 +17,9 @@ SCREEN_HEIGHT = 480
 MAX_BAR_HEIGHT = SCREEN_HEIGHT - 100 - 90
 FONT_FILE = os.path.join(os.path.dirname(__file__), 'PressStart2P.ttf')
 LOGO_FILE = os.path.join(os.path.dirname(__file__), 'caktus-logo.png')
+RAZZY_FILE = os.path.join(os.path.dirname(__file__), 'razzy-small.png')
+
+MESSAGE = "   txt '919-525-0114 vote' with your choice"
 
 
 class Screen(object):
@@ -120,7 +123,10 @@ class PollDisplay(object):
         self.screen = Screen()
         self.font = pygame.font.Font(FONT_FILE, 20)
         self.logo = Sprite(pygame.image.load(LOGO_FILE), rescale=2)
-        self.logo.move_to(self.screen.width/2 - self.logo.width/2, self.screen.height - self.logo.height)
+        self.logo.move_to(0, self.screen.height - self.logo.height)
+
+        self.razzi = Sprite(pygame.image.load(RAZZY_FILE), rescale=2)
+        self.razzi.move_to(self.screen.width - self.razzi.width, self.screen.height - self.razzi.height)
 
         self.datasource = datasource
         self.change_at = datetime.now() + timedelta(seconds=30)
@@ -139,6 +145,7 @@ class PollDisplay(object):
             self.bars.append(bar)
             self.screen.add(bar)
         self.screen.add(self.logo)
+        self.screen.add(self.razzi)
         self.screen.add(self)
 
     def next_poll(self):
@@ -163,6 +170,12 @@ class PollDisplay(object):
         text = self.font.render(self.datasource.get_poll_name(self.poll_id), False, pygame.color.THECOLORS['white'])
         textpos = text.get_rect()
         textpos.move_ip((640 / 2) - (textpos.width / 2), 5)
+        to.blit(text, textpos)
+
+        font = pygame.font.Font(FONT_FILE, 12)
+        text = font.render(MESSAGE, False, pygame.color.THECOLORS['white'])
+        textpos = text.get_rect()
+        textpos.move_ip((640 / 2) - (textpos.width / 2), self.screen.height - textpos.height - 20)
         to.blit(text, textpos)
 
 
