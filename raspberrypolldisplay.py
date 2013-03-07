@@ -32,6 +32,7 @@ class Screen(object):
         self.objects = []
         # Initialize pygame and create the display window
         pygame.init()
+        pygame.mouse.set_visible(False)
         pygame.display.set_caption("Raspberry Pi Poll Application")
         self.surface = pygame.display.set_mode((self.width, self.height))
         # Setup background
