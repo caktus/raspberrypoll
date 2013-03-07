@@ -130,6 +130,7 @@ class PollDisplay(object):
 
         self.datasource = datasource
         self.change_at = datetime.now() + timedelta(seconds=30)
+        self.poll_id = None
         self.next_poll()
 
     def setup_bars(self):
@@ -149,8 +150,10 @@ class PollDisplay(object):
         self.screen.add(self)
 
     def next_poll(self):
-        self.poll_id = self.datasource.get_next_poll()
-        random.shuffle(self.BAR_COLORS)
+        new_poll_id = self.datasource.get_next_poll()
+        if new_poll_id != self.poll_id:
+            random.shuffle(self.BAR_COLORS)
+            self.poll_id = new_poll_id
         self.setup_bars()
 
     def show_poll(self):
@@ -213,7 +216,7 @@ class SqlitePollDataSource(object):
         return [(i, r[0]) for (i, r) in enumerate(self.cur.fetchall())]
 
     def get_next_poll(self):
-        self.cur.execute("select id from textpoll_poll order by id")
+        self.cur.execute("select id from textpoll_poll where active order by id")
         ids = [r[0] for r in self.cur.fetchall()]
         self.poll_index += 1
         return ids[self.poll_index % len(ids)]
