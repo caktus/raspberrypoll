@@ -19,7 +19,7 @@ FONT_FILE = os.path.join(os.path.dirname(__file__), 'PressStart2P.ttf')
 LOGO_FILE = os.path.join(os.path.dirname(__file__), 'caktus-logo.png')
 RAZZY_FILE = os.path.join(os.path.dirname(__file__), 'razzy-small.png')
 
-MESSAGE = "   txt '919-525-0114 vote' with your choice"
+MESSAGE = "   text 'vote <choice>' to 919-525-0114"
 
 
 class Screen(object):
